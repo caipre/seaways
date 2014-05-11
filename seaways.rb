@@ -5,36 +5,40 @@ require 'uri/http'
 
 $stdout.sync
 
-def same_domain?(uri)
-  return uri[%r(^/[^/]+)] ||
-         URI.parse(uri).hostname.start_with?(ARGV.first)
-rescue NoMethodError
+def init(hostname)
+  @hostname = hostname
+  @blacklist = %w(jpg gif png zip)
+
+  puts filter(parse(fetch(@hostname)))
 end
 
 def fetch(uri)
-  uri = "#{ ARGV.first }#{ uri }" if uri.start_with?('/')
-  print "fetching #{ uri }"
+  puts "fetch #{ uri }"
+  Nokogiri::HTML(open(uri))
+rescue RuntimeError => error
+  puts error
+end
 
-  begin
-    links = Nokogiri::HTML(open(uri)).css('a[href]')
-  rescue RuntimeError
-    puts ' <-- BROKEN'
-    return
-  end
-  puts " => #{ links.size } links"
+def parse(doc)
+  {
+    links:   doc.css('a[href]'),
+    scripts: doc.css('script[src]'),
+    styles:  doc.css('link[href]'),
+  }
+end
 
-  links.each do |link|
-    next unless same_domain?(link[:href])
-    next if link[:href][/\..+$/]
-
-    unless @index.key?(link[:href])
-      @index[link[:href]] ||= 1
-      fetch(link[:href])
+def filter(assets)
+  assets.each do |type, list|
+    list.select! do |asset|
+      same_domain?(asset) && !asset.end_with?(*@blacklist)
     end
   end
 end
 
-@index = {}
-fetch(ARGV.first)
-puts
-puts @index
+def same_domain?(uri)
+  return (uri.start_with?('/') && !uri.start_with?('//')) ||
+         URI.parse(uri).hostname.start_with?(@hostname)
+rescue NoMethodError
+end
+
+init(ARGV.first)
