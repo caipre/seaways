@@ -1,0 +1,13 @@
+#!/usr/bin/env ruby -w
+require_relative '../lib/seaways'
+
+if ARGV.empty?
+   puts <<-USAGE
+Seaways is a bare-bones web crawler that tracks links between pages and records
+information about static assets (Javascript and CSS resources).
+
+Usage: seaways <http://example.com>
+USAGE
+else
+   Seaways::navigate(ARGV.first)
+end
