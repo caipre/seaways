@@ -16,8 +16,8 @@ module Seaways
     debug: false,
   }
 
-  def self.navigate(uri)
-    Core.new(uri).run
+  def self.navigate(href)
+    Core.new(href).run
   end
 
   class Core
@@ -33,9 +33,8 @@ module Seaways
     def run
       while !@queue.empty?
         status
-        uri = @queue.shift
-        next if visited(uri)
-        visit(uri)
+        href = @queue.shift
+        visit(href) unless visited(href)
       end
       status
       puts nil, @pages.to_yaml, @errors.to_yaml
@@ -46,33 +45,34 @@ module Seaways
               @pages.size, @queue.size, @errors.size)
     end
 
-    def visited(uri)
-      @pages.key?(uri.to_s.to_sym)
-    end
-
-    def visit(uri)
-      if doc = get(uri)
-        links  = links(doc)
-        assets = assets(doc)
-        @pages[uri.to_s.to_sym] = make_page(links, assets)
-        @queue += links[:local]
+    def visit(href)
+      if doc = get(href)
+        @pages[href.to_sym] = {
+          links: links(doc),
+          assets: assets(doc),
+        }
+        @queue += links[:local].select { |href| !visited(href) }
       else
-        @pages[uri.to_s.to_sym] = nil
+        @pages[href.to_sym] = nil
       end
     end
 
-    def get(uri, tries=0)
-      puts "get #{ uri }" if CONFIG[:debug]
-      Nokogiri::HTML(open(uri.to_s))
+    def visited(href)
+      @pages.key?(href.to_sym)
+    end
+
+    def get(href, tries=0)
+      puts "get #{ href }" if CONFIG[:debug]
+      Nokogiri::HTML(open(href))
     rescue RuntimeError, OpenURI::HTTPError => error
       if tries >= 5
-        @errors << "Possible infinite loop: skipping #{ uri }"
+        @errors << "Possible infinite loop: skipping #{ href }"
       elsif error.message =~ /^redirection forbidden: (http.*) -> (http.*)$/
         puts "   `- #{$1} -> #{$2}" if CONFIG[:debug]
         uri = make_uri($2)
-        return get(uri, (tries + 1)) if uri
+        return get(uri.to_s, (tries + 1)) if uri
       else
-        @errors << "Error: #{ error } -- #{ uri }"
+        @errors << "Error: #{ error } -- #{ href }"
       end
       nil
     end
@@ -80,12 +80,12 @@ module Seaways
     def links(doc)
       [:local, :remote].zip(
         doc.css('a[href]').to_a
-          .uniq { |a| a[:href].to_s }
           .map { |a| make_uri(a[:href]) }
           .compact
           .partition { |uri| follow_link?(uri) }
           .map do |list|
             list
+              .uniq { |uri| uri.to_s }
               .collect { |uri| uri.to_s }
               .sort
           end
@@ -95,8 +95,7 @@ module Seaways
     def follow_link?(uri)
       uri.scheme.start_with?('http') &&
       uri.host.start_with?(@target.host, 'www' << @target.host) &&
-      !uri.path.end_with?(*CONFIG[:blacklist]) &&
-      !visited(uri)
+      !uri.path.end_with?(*CONFIG[:blacklist])
     end
 
     def assets(doc)
@@ -104,21 +103,14 @@ module Seaways
 
       [:js, :css].zip(
         doc.css('script[src], link[href]').to_a
-          .uniq { |node| ref.call(node) }
           .partition { |node| node[:src] }
           .map do |list|
             list
+              .uniq { |node| ref.call(node) }
               .collect { |node| ref.call(node) }
               .sort
           end
       ).to_h
-    end
-
-    def make_page(links, assets)
-      {
-        links: links,
-        assets: assets,
-      }
     end
 
     def make_uri(str)
