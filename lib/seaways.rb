@@ -27,7 +27,7 @@ module Seaways
 
       host = 'http://' << host unless host.start_with?('http://', 'https://')
       @target = make_uri(host)
-      @queue = [@target]
+      @queue = [@target.to_s]
     end
 
     def run
@@ -47,11 +47,13 @@ module Seaways
 
     def visit(href)
       if doc = get(href)
+        links = links(doc)
+        assets = assets(doc)
         @pages[href.to_sym] = {
-          links: links(doc),
-          assets: assets(doc),
+          links: links,
+          assets: assets,
         }
-        @queue += links[:local].select { |href| !visited(href) }
+        @queue += links[:local].select { |h| !visited(h) }
       else
         @pages[href.to_sym] = nil
       end
@@ -74,6 +76,8 @@ module Seaways
       else
         @errors << "Error: #{ error } -- #{ href }"
       end
+      nil
+    rescue Errno::ENOENT => error
       nil
     end
 
