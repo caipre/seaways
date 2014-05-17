@@ -40,18 +40,39 @@ describe Seaways do
 
    describe '#follow_link?' do
       context 'with a blacklisted href' do
-         it 'returns false'
+         it 'returns false' do
+            uri = @seaways.make_uri('http://example.org/image.jpg')
+            expect(@seaways.follow_link?(uri)).to be_false
+         end
       end
 
       context 'with an href in the local domain' do
-         it 'returns true'
-         it 'returns true (www subdomain)'
-         it 'returns true (different scheme)'
+         it 'returns true' do
+            uri = @seaways.make_uri('http://example.org/foo/bar')
+            expect(@seaways.follow_link?(uri)).to be_true
+         end
+
+         it 'returns true (www subdomain)' do
+            uri = @seaways.make_uri('http://www.example.org/foo/bar')
+            expect(@seaways.follow_link?(uri)).to be_true
+         end
+
+         it 'returns true (different scheme)' do
+            uri = @seaways.make_uri('https://example.org/foo/bar')
+            expect(@seaways.follow_link?(uri)).to be_true
+         end
       end
 
       context 'with an href to a remote domain' do
-         it 'returns false'
-         it 'returns false (non-www subdomain)'
+         it 'returns false' do
+            uri = @seaways.make_uri('http://google.com')
+            expect(@seaways.follow_link?(uri)).to be_false
+         end
+
+         it 'returns false (non-www subdomain)' do
+            uri = @seaways.make_uri('http://static.example.org')
+            expect(@seaways.follow_link?(uri)).to be_false
+         end
       end
    end
 
