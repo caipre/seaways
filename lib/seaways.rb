@@ -121,8 +121,8 @@ module Seaways
       ).to_h
     end
 
-    def make_uri(str)
-      uri = URI::parse(str.to_s)
+    def make_uri(href)
+      uri = URI::parse(href.to_s)
       uri.normalize!
       return uri if uri.scheme && !uri.scheme.start_with?('http')
       uri.scheme ||= @target.scheme
