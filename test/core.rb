@@ -4,17 +4,25 @@ include Seaways
 
 describe Seaways do
    before do
-      @seaways = Core.new('http://example.org')
+      @seaways = Seaways::Core.new('http://example.org')
    end
 
    describe '#visit' do
       context 'with a valid href' do
-         it 'inserts a page'
+         it 'inserts a page' do
+            @seaways.visit('http://example.org')
+            expect(@seaways.pages).to have_key(:'http://example.org')
+         end
+
+         # Needs document mock; example.org has no local links
          it 'adds local links to the queue'
       end
 
       context 'with an invalid href' do
-         it 'inserts a nil page'
+         it 'inserts a nil page' do
+            @seaways.visit('http://example!org')
+            expect(@seaways.pages).to  eql({:'http://example!org' => nil})
+         end
       end
    end
 

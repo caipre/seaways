@@ -21,9 +21,10 @@ module Seaways
   end
 
   class Core
+    attr_accessor :pages, :errors
     def initialize(host)
-      @errors = []
       @pages = {}
+      @errors = []
 
       host = 'http://' << host unless host.start_with?('http://', 'https://')
       @target = make_uri(host)
@@ -81,7 +82,7 @@ module Seaways
         @errors << "Error: #{ error } -- #{ @href }"
       end
       nil
-    rescue Errno::ENOENT => error
+    rescue URI::InvalidURIError, Errno::ENOENT => error
       nil
     end
 
