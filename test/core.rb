@@ -139,8 +139,15 @@ describe Seaways do
     end
 
     context 'with an invalid href' do
-      it 'records an error'
-      it 'returns nil'
+      it 'records an error' do
+        uri = @seaways.make_uri('http://example!org')
+        expect(@seaways.errors).to have(1).item
+      end
+
+      it 'returns nil' do
+        uri = @seaways.make_uri('http://example!org')
+        expect(uri).to be_nil
+      end
     end
   end
 end

@@ -134,7 +134,7 @@ module Seaways
     uri.fragment = nil
     uri
    rescue URI::InvalidURIError
-    @errors << "Bad URI: #{ str } on page #{ @href }"
+    @errors << "Bad URI: #{ href } on page #{ @href }"
     nil
    end
   end
