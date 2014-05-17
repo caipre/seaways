@@ -83,6 +83,7 @@ module Seaways
       end
       nil
     rescue URI::InvalidURIError, Errno::ENOENT => error
+       @errors << "Error: #{ error } -- #{ @href }"
       nil
     end
 

@@ -21,7 +21,7 @@ describe Seaways do
       context 'with an invalid href' do
          it 'inserts a nil page' do
             @seaways.visit('http://example!org')
-            expect(@seaways.pages).to  eql({:'http://example!org' => nil})
+            expect(@seaways.pages).to eql({:'http://example!org' => nil})
          end
       end
    end
@@ -34,7 +34,14 @@ describe Seaways do
       end
 
       context 'with an invalid href' do
-         it 'returns nil'
+         it 'records the error' do
+            @seaways.get('http://example!org')
+            expect(@seaways.errors).to have(1).item
+         end
+
+         it 'returns nil' do
+            expect(@seaways.get('http://example!org')).to be_nil
+         end
       end
    end
 
