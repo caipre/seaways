@@ -33,15 +33,15 @@ module Seaways
     def run
       while !@queue.empty?
         status
-        href = @queue.shift
-        visit(href) unless visited(href)
+        @href = @queue.shift
+        visit(@href) unless visited(@href)
       end
       status
-      puts nil, @pages.to_yaml, @errors.to_yaml
+      puts nil, @pages.to_yaml, @errors.sort.to_yaml
     end
 
     def status
-      printf("\rPages: %3d   Queue: %3d   Errors: %3d",
+      $stderr.printf("\rPages: %3d   Queue: %3d   Errors: %3d",
               @pages.size, @queue.size, @errors.size)
     end
 
@@ -70,11 +70,15 @@ module Seaways
       if tries >= 5
         @errors << "Possible infinite loop: skipping #{ href }"
       elsif error.message =~ /^redirection forbidden: (http.*) -> (http.*)$/
+        # This is ugly, but open-uri doesn't natively handle redirects.
         puts "   `- #{$1} -> #{$2}" if CONFIG[:debug]
         uri = make_uri($2)
-        return get(uri.to_s, (tries + 1)) if uri
+        if uri
+          @href = uri.to_s
+          return get(@href, (tries + 1))
+        end
       else
-        @errors << "Error: #{ error } -- #{ href }"
+        @errors << "Error: #{ error } -- #{ @href }"
       end
       nil
     rescue Errno::ENOENT => error
@@ -128,7 +132,7 @@ module Seaways
       uri.fragment = nil
       uri.freeze
     rescue URI::InvalidURIError
-      @errors << "Bad URI: #{ str }"
+      @errors << "Bad URI: #{ str } on page #{ @href }"
       nil
     end
   end
