@@ -98,7 +98,7 @@ module Seaways
 
     def follow_link?(uri)
       uri.scheme.start_with?('http') &&
-      uri.host.start_with?(@target.host, 'www' << @target.host) &&
+      uri.host.start_with?(@target.host, 'www.' << @target.host) &&
       !uri.path.end_with?(*CONFIG[:blacklist])
     end
 
