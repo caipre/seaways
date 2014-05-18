@@ -46,11 +46,35 @@ describe Seaways do
   end
 
   describe '#links' do
-    it 'separates local and remote URIs'
+    it 'separates local and remote URIs' do
+      links = [
+        { href: 'http://example.org' },
+        { href: 'http://google.com' },
+      ]
+      doc = double
+      doc.stub(css: links)
+
+      expect(@seaways.links(doc)).to eq(
+        local: ['http://example.org/'],
+        remote: ['http://google.com/']
+      )
+    end
   end
 
   describe '#assets' do
-    it 'separates local and remote assets'
+    it 'separates local and remote assets' do
+      assets = [
+        { src: '//cdnjs.cloudflare.com/ajax/libs/ace/1.1.3/ace.js' },
+        { href: '/css/normalize.css' },
+      ]
+      doc = double
+      doc.stub(css: assets)
+
+      expect(@seaways.assets(doc)).to eq(
+        js: ['//cdnjs.cloudflare.com/ajax/libs/ace/1.1.3/ace.js'],
+        css: ['/css/normalize.css']
+      )
+    end
   end
 
   describe '#follow_link?' do
