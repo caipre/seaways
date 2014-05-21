@@ -106,7 +106,7 @@ module Seaways
     ##
     def get(href, tries=0)
       puts "get #{ href }" if CONFIG[:debug]
-      Nokogiri::HTML(open(href))
+      Nokogiri::HTML(open(href, 'User-Agent' => 'Seaways/1.0'))
     rescue RuntimeError, OpenURI::HTTPError => error
       if tries >= CONFIG[:max_redirects]
         @errors << "Possible infinite loop: skipping #{ href }"
