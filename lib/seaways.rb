@@ -128,15 +128,15 @@ module Seaways
     def links(doc)
       [:local, :remote].zip(
         doc.css('a[href]').to_a
-        .map { |a| make_uri(a[:href]) }
-        .compact
-        .partition { |uri| follow_link?(uri) }
-        .map do |list|
-        list
-          .uniq { |uri| uri.to_s }
-          .collect { |uri| uri.to_s }
-          .sort
-      end
+          .map { |a| make_uri(a[:href]) }
+          .compact
+          .partition { |uri| follow_link?(uri) }
+          .map do |list|
+            list
+              .uniq { |uri| uri.to_s }
+              .collect { |uri| uri.to_s }
+              .sort
+          end
       ).to_h
     end
 
@@ -158,13 +158,13 @@ module Seaways
 
       [:js, :css].zip(
         doc.css('script[src], link[href]').to_a
-        .partition { |node| node[:src] }
-        .map do |list|
-        list
-          .uniq { |node| ref.call(node) }
-          .collect { |node| ref.call(node) }
-          .sort
-      end
+          .partition { |node| node[:src] }
+          .map do |list|
+            list
+              .uniq { |node| ref.call(node) }
+              .collect { |node| ref.call(node) }
+              .sort
+          end
       ).to_h
     end
 
