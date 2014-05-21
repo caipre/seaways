@@ -30,7 +30,7 @@ module Seaways
   end
 
   class Core
-    attr_accessor :pages, :queue, :errors
+    attr_reader :pages, :queue, :errors
 
     def initialize(host)
       @pages = {}  # mapping from href to page hash
