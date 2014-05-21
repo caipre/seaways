@@ -133,9 +133,9 @@ module Seaways
           .partition { |uri| follow_link?(uri) }
           .map do |list|
             list
-              .uniq { |uri| uri.to_s }
               .collect { |uri| uri.to_s }
               .sort
+              .uniq
           end
       ).to_h
     end
@@ -154,16 +154,14 @@ module Seaways
     # @return hash
     #$
     def assets(doc)
-      ref = lambda { |node| (node[:src] || node[:href]).to_s }
-
       [:js, :css].zip(
         doc.css('script[src], link[href]').to_a
           .partition { |node| node[:src] }
           .map do |list|
             list
-              .uniq { |node| ref.call(node) }
-              .collect { |node| ref.call(node) }
+              .collect { |node| (node[:src] || node[:href]).to_s }
               .sort
+              .uniq
           end
       ).to_h
     end
