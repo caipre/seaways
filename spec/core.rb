@@ -6,41 +6,42 @@ include Nokogiri
 include Seaways
 
 describe Seaways do
-  before(:each) do
-    @seaways = Seaways::Core.new('http://localhost.org')
-    @seaways.stub(:get) do
-      Nokogiri::HTML(<<-html)
-        <html>
-          <head>
-            <title>A stubbed page</title>
-            <link href="/style.css" />
-            <link href="http://remotehost.org/style.css" />
-            <script src="/script.js"></script>
-            <script src="http://remotehost.org/script.js" />
-          </head>
-          <body>
-            <a name="anchor">Named anchor</a>
-            <a href="/foo/bar">Link to visit</a>
-            <a href="http://localhost.org">Already visited link</a>
-            <a href="http://remotehost.com">Remote link</a>
-          </body>
-        </html>
-      html
-    end
+  let (:document) do
+    Nokogiri::HTML(<<-html)
+      <html>
+        <head>
+          <title>A stubbed page</title>
+          <link href="/style.css" />
+          <link href="http://remotehost.org/style.css" />
+          <script src="/script.js"></script>
+          <script src="http://remotehost.org/script.js" />
+        </head>
+        <body>
+          <a name="anchor">Named anchor</a>
+          <a href="/foo/bar">Link to visit</a>
+          <a href="http://localhost.org">Already visited link</a>
+          <a href="http://remotehost.com">Remote link</a>
+        </body>
+      </html>
+    html
   end
 
   describe '#visit' do
+    before(:each) do
+      @seaways = Seaways::Core.new('http://localhost.org')
+      @seaways.stub(:get).and_return(document)
+    end
+
     context 'with a valid href' do
       it 'inserts a page' do
         @seaways.visit('http://localhost.org')
         expect(@seaways.pages).to have_key(:'http://localhost.org')
       end
 
-      # Needs document mock; localhost.org has no local links
       it 'adds local links to the queue' do
-          @seaways.visit('http://localhost.org')
-          expect(@seaways.queue).to include('http://localhost.org/foo/bar/')
-          expect(@seaways.queue).to have(1).item
+        @seaways.visit('http://localhost.org')
+        expect(@seaways.queue).to include('http://localhost.org/foo/bar')
+        expect(@seaways.queue).to have(1).item
       end
     end
 
