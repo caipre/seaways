@@ -113,7 +113,7 @@ module Seaways
         @errors << "Error: #{ error } -- #{ @href }"
       end
       nil
-    rescue URI::InvalidURIError, Errno::ENOENT => error
+    rescue URI::InvalidURIError, Errno::ENOENT, Errno::ECONNRESET => error
       @errors << "Error: #{ error } -- #{ @href }"
       nil
     end

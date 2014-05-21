@@ -1,10 +1,31 @@
 #!/usr/bin/env rspec
 require_relative '../lib/seaways'
+require 'nokogiri'
+
+include Nokogiri
 include Seaways
 
 describe Seaways do
   before do
-    @seaways = Seaways::Core.new('http://example.org')
+    @seaways = Seaways::Core.new('http://localhost.org')
+    @seaways.stub(:get) do
+      Nokogiri::HTML(<<-html)
+        <html>
+          <head>
+            <title>A stubbed page</title>
+            <link href="/style.css" />
+            <link href="http://remotehost.org/style.css" />
+            <script src="/script.js"></script>
+            <script src="http://remotehost.org/script.js" />
+          </head>
+          <body>
+            <a name="anchor">Named anchor</a>
+            <a href="/foo/bar">Link to visit</a>
+            <a href="http://localhost.org">Already visited link</a>
+            <a href="http://remotehost.com">Remote link</a>
+          </body>
+        </html>
+      html
   end
 
   describe '#visit' do
@@ -15,7 +36,12 @@ describe Seaways do
       end
 
       # Needs document mock; example.org has no local links
-      it 'adds local links to the queue'
+      it 'adds local links to the queue' do
+          @seaways.visit('http://example.org')
+          expect(@seaways.queue).to include('http://example.org/foo/bar')
+          expect(@seaways.queue).to have(1).item
+        end
+      end
     end
 
     context 'with an invalid href' do
