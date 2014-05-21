@@ -7,6 +7,7 @@ require 'uri'
 require 'YAML'
 
 $stdout.sync
+$stderr.sync
 
 ##
 # A bare-bones web crawler that tracks links between pages and records
@@ -26,7 +27,9 @@ module Seaways
   }
 
   def self.navigate(href)
-    Core.new(href).run
+    sw = Core.new(href)
+    sw.run
+    sw.display
   end
 
   class Core
@@ -51,7 +54,6 @@ module Seaways
         visit(@href) unless visited(@href)
       end
       status
-      puts @pages.to_yaml
     end
 
     ##
@@ -59,8 +61,15 @@ module Seaways
     # standard unix shell pipelining..
     ##
     def status
-      $stderr.printf("\rPages: %3d  Queue: %3d  Errors: %3d",
+      $stderr.printf("\rPages: %4d  Queue: %4d  Errors: %4d",
                      @pages.size, @queue.size, @errors.size)
+    end
+
+    def display
+      $stderr.puts
+      puts @pages.to_yaml
+      puts
+      puts @errors.to_yaml
     end
 
     ##
