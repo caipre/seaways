@@ -37,7 +37,6 @@ module Seaways
       @errors = []
 
       host = 'http://' << host unless host.start_with?('http://', 'https://')
-      host << '/' unless host.end_with?('/')
       @target = make_uri(host)
       @queue = [@target.to_s]
     end
