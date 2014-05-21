@@ -6,7 +6,7 @@ include Nokogiri
 include Seaways
 
 describe Seaways do
-  before do
+  before(:each) do
     @seaways = Seaways::Core.new('http://localhost.org')
     @seaways.stub(:get) do
       Nokogiri::HTML(<<-html)
