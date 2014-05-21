@@ -6,8 +6,8 @@ include Nokogiri
 include Seaways
 
 describe Seaways do
-  let (:document) do
-    Nokogiri::HTML(<<-html)
+  let (:html) do
+    <<-html
       <html>
         <head>
           <title>A stubbed page</title>
@@ -26,38 +26,71 @@ describe Seaways do
     html
   end
 
+  let (:document) { Nokogiri::HTML(html) }
+
+
   describe '#visit' do
     before(:each) do
       @seaways = Seaways::Core.new('http://localhost.org')
       @seaways.stub(:get).and_return(document)
+      href = @seaways.queue.shift
+      @seaways.visit(href)
     end
 
     context 'with a valid href' do
       it 'inserts a page' do
-        @seaways.visit('http://localhost.org')
-        expect(@seaways.pages).to have_key(:'http://localhost.org')
+        expect(@seaways.pages).to have_key(:'http://localhost.org/')
       end
 
       it 'adds local links to the queue' do
-        @seaways.visit('http://localhost.org')
         expect(@seaways.queue).to include('http://localhost.org/foo/bar')
         expect(@seaways.queue).to have(1).item
       end
     end
+  end
+
+  describe '#visit' do
+    before(:each) do
+      @seaways = Seaways::Core.new('http://localhost!org')
+      @seaways.visit('http://localhost!org/')
+    end
 
     context 'with an invalid href' do
       it 'inserts a nil page' do
-        @seaways.visit('http://localhost!org')
-        expect(@seaways.pages).to eql({:'http://localhost!org' => nil})
+        expect(@seaways.pages).to eql({:'http://localhost!org/' => nil})
       end
     end
   end
 
   describe '#get' do
+    before(:each) do
+      @seaways = Seaways::Core.new('http://localhost.org')
+    end
+
     context 'with a valid href' do
-      it 'returns a document'
-      it 'follows redirects'
-      it "doesn't infinitely redirect"
+      it 'returns a document' do
+        @seaways.stub(:open).and_return(html)
+        expect(@seaways.get('http://localhost.org')).to be_an_instance_of(Nokogiri::HTML::Document)
+      end
+
+      it 'follows redirects' do
+        @redirect = true
+        @seaways.stub(:open).and_return do
+          if @redirect
+            @redirect = false
+            raise RuntimeError, 'redirection forbidden: http://localhost.org -> https://localhost.org'
+          else
+            html
+          end
+        end
+        expect(@seaways.get('http://localhost.org')).to be_an_instance_of(Nokogiri::HTML::Document)
+      end
+
+      it "doesn't infinitely redirect" do
+        @redirect = true
+        @seaways.stub(:open).and_raise(RuntimeError, 'redirection forbidden: http://localhost.org -> https://localhost.org')
+        expect(@seaways.get('http://localhost.org')).to be_nil
+      end
     end
 
     context 'with an invalid href' do
@@ -73,6 +106,13 @@ describe Seaways do
   end
 
   describe '#links' do
+    before(:each) do
+      @seaways = Seaways::Core.new('http://localhost.org')
+      @seaways.stub(:get).and_return(document)
+      href = @seaways.queue.shift
+      @seaways.visit(href)
+    end
+
     it 'separates local and remote URIs' do
       links = [
         { href: 'http://localhost.org' },
@@ -89,6 +129,13 @@ describe Seaways do
   end
 
   describe '#assets' do
+    before(:each) do
+      @seaways = Seaways::Core.new('http://localhost.org')
+      @seaways.stub(:get).and_return(document)
+      href = @seaways.queue.shift
+      @seaways.visit(href)
+    end
+
     it 'separates local and remote assets' do
       assets = [
         { src: '//cdnjs.cloudflare.com/ajax/libs/ace/1.1.3/ace.js' },
@@ -105,6 +152,13 @@ describe Seaways do
   end
 
   describe '#follow_link?' do
+    before(:each) do
+      @seaways = Seaways::Core.new('http://localhost.org')
+      @seaways.stub(:get).and_return(document)
+      href = @seaways.queue.shift
+      @seaways.visit(href)
+    end
+
     context 'with a blacklisted href' do
       it 'returns false' do
         uri = @seaways.make_uri('http://localhost.org/image.jpg')
@@ -143,6 +197,13 @@ describe Seaways do
   end
 
   describe '#make_uri' do
+    before(:each) do
+      @seaways = Seaways::Core.new('http://localhost.org')
+      @seaways.stub(:get).and_return(document)
+      href = @seaways.queue.shift
+      @seaways.visit(href)
+    end
+
     context 'with a valid href' do
       it 'parses the scheme, host, and path' do
         uri = @seaways.make_uri('http://localhost.org')
